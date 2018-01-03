@@ -1,0 +1,11 @@
+#Local       prob  degree numOfFrame
+SOLDER,      0.5,5   ,10
+MOUSE,       0.5,5   ,10
+#            prob  rate   numOfFrame              
+EYE,         0.5,0.2 ,10
+#            prob  distance numOfFrame
+LEFTHAND,    0.5,100 ,10
+RIGHTHAND,   0.5,100 ,10
+#            prob  dmy   numOfframe
+LEFTFINGER,  0.1,5   ,10
+RIGHTFINGER, 0.1,5   ,10
