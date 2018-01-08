@@ -17,7 +17,7 @@ char *argv[];
   double conf;
 
   if(argc < 4) {
-    fprintf(stderr,"command anaFile confidence ITEM(SOLD,MOUS,EYES,LFIN,RFIN,LHND,RHND)\n");
+    fprintf(stderr,"command anaFile confidence ITEM(SOLD,NOSE,MOUS,EYES,LFIN,RFIN,LHND,RHND)\n");
     fprintf(stderr,"Return 0:UNKOWN 1:NOGOOD 2:GOOD\n");
     RTN(-99);
   }

@@ -34,12 +34,13 @@ char *argv[];
   double xLeye,yLeye,pLeye,xReye,yReye,pReye,xNose,yNose,pNose;
   double distR,distL;
   double xRhand,yRhand,pRhand,xLhand,yLhand,pLhand;
+  double xNoseTop,yNoseTop,pNoseTop,xNoseBot,yNoseBot,pNoseBot,angleM,angleN;
 
   char *p,record[M_REC];
   double *param,parmSolder[4],parmMouse[4],parmEye[4],parmLHand[4],parmRHand[4],parmLFinger[4],parmRFinger[4];
-
+  double parmNose[4];  
   char *pSide;
-  int solderP,mouseP,eyeP,leftFingerP,rightFingerP,leftHandP,rightHandP;
+  int solderP,noseP,mouseP,eyeP,leftFingerP,rightFingerP,leftHandP,rightHandP;
 
   if(argc < 8) {
     fprintf(stderr,"USAGE command paramFile poseFile faceFile leftHandFile rightHandFile outFile anaFile\n");
@@ -85,6 +86,7 @@ char *argv[];
 
   /* Read Param File */
   parmSolder [0]=0.5;
+  parmNose   [0]=0.5;
   parmMouse  [0]=0.5;
   parmEye    [0]=0.5;
   parmLHand  [0]=0.5;
@@ -93,6 +95,7 @@ char *argv[];
   parmRFinger[0]=0.5;
 
   parmSolder [1]=5;
+  parmNose   [1]=5;
   parmMouse  [1]=5;
   parmEye    [1]=0.2;
   parmLHand  [1]=100;
@@ -101,6 +104,7 @@ char *argv[];
   parmRFinger[1]=5;
 
   parmSolder [2]=10;
+  parmNose   [2]=10;
   parmMouse  [2]=10;
   parmEye    [2]=10;
   parmLHand  [2]=10;
@@ -114,6 +118,7 @@ char *argv[];
     if(record[0] == '#') continue;
     p=strtok(record,", ");
     if(!strcmp(p,"SOLDER"))      param=parmSolder;
+    if(!strcmp(p,"Nose"))        param=parmNose;
     if(!strcmp(p,"MOUSE"))       param=parmMouse;
     if(!strcmp(p,"EYE"))         param=parmEye;
     if(!strcmp(p,"LEFTHAND"))    param=parmLHand;
@@ -192,7 +197,7 @@ char *argv[];
   if(maxFi < n) n=maxFi;
 
 
-  solderP=mouseP=eyeP=leftFingerP=rightFingerP=leftHandP=rightHandP=0;
+  solderP=noseP=mouseP=eyeP=leftFingerP=rightFingerP=leftHandP=rightHandP=0;
 
   /**
   for(i=0;i<n;i++) {
@@ -277,7 +282,39 @@ char *argv[];
     }
     fprintf(fa,"%lf,%lf,%lf,%s,",yLsold,yRsold,angle,pSide);
 
-    /* mouse */
+    /* nose 27 28 29 30 51 57 to mouse 48 54*/
+    xNoseTop=face[i][85]; /* 28 */
+    yNoseTop=face[i][86];
+    pNoseTop=face[i][87];
+
+    /* 30 
+    xNoseBot=face[i][91]; 
+    yNoseBot=face[i][92];
+    pNoseBot=face[i][93]; */
+
+    /* 57 */
+    xNoseBot=face[i][172]; 
+    yNoseBot=face[i][173];
+    pNoseBot=face[i][174];
+
+    if(pNoseTop < parmMouse[0] || pNoseBot < parmMouse[0] ) {
+      pSide = "Nos_UK";
+      xNoseTop=0;
+      xNoseBot=0;
+    }
+    else {
+      angleN = atan(fabs(yNoseTop - yNoseBot)/(xNoseTop - xNoseBot))/PI*180.0;
+      if(fabs(angle) -90.0 < parmNose[1]) pSide="Nos_OK";
+      else                                pSide="Nos_NG";
+
+      if(i >= n-parmNose[2]) {
+        if(!strcmp(&pSide[strlen(pSide)-2],"OK")) noseP++;
+        else                                      noseP--;
+      }  
+
+    }
+    fprintf(fa,"%lf,%lf,%lf,%s,",xNoseTop,xNoseBot,angle,pSide);
+
     xLmouse=face[i][145];
     yLmouse=face[i][146];
     pLmouse=face[i][147];
@@ -285,14 +322,19 @@ char *argv[];
     yRmouse=face[i][164];
     pRmouse=face[i][165];
 
-    if(pRmouse < parmMouse[0] || pLmouse < parmMouse[0]) {
+    if(pRmouse  < parmMouse[0] || 
+       pLmouse  < parmMouse[0] || 
+       pNoseTop < parmNose[0]  ||
+       pNoseBot < parmNose[0]  ) {
       pSide="M_UK";
       angle = 0;
       yLmouse=0;
       yRmouse=0;
     }
     else {
-      angle = atan(fabs(yRmouse - yLmouse)/(xRmouse - xLmouse))/PI*180.0;
+      angleM = atan(fabs(yLmouse  - yRmouse )/(xLmouse  - xRmouse ))/PI*180.0;
+      angleN = atan(fabs(yNoseTop - yNoseBot)/(xNoseTop - xNoseBot))/PI*180.0;
+      angle  = fabs(angleN + angleM) - 90.0;
       if(fabs(angle) < parmMouse[1]) pSide="M_OK";
       else                           pSide="M_NG";
 
@@ -443,6 +485,7 @@ char *argv[];
   fclose(fa);
 
   fprintf(stderr,"SOLD,%d,%lf\n",solderP,     solderP/     parmSolder [2]);
+  fprintf(stderr,"NOSE,%d,%lf\n",noseP,       noseP/       parmNose   [2]);
   fprintf(stderr,"MOUS,%d,%lf\n",mouseP,      mouseP/      parmMouse  [2]);
   fprintf(stderr,"EYES,%d,%lf\n",eyeP,        eyeP/        parmEye    [2]);
   fprintf(stderr,"LFIN,%d,%lf\n",leftFingerP, leftFingerP/ parmLFinger[2]);
@@ -451,6 +494,7 @@ char *argv[];
   fprintf(stderr,"RHND,%d,%lf\n",rightHandP,  rightHandP/  parmRHand  [2]);
 
   fprintf(fw,"SOLD,%d,%lf\n",solderP,     solderP/     parmSolder [2]);
+  fprintf(fw,"NOSE,%d,%lf\n",noseP,       noseP/       parmNose   [2]);
   fprintf(fw,"MOUS,%d,%lf\n",mouseP,      mouseP/      parmMouse  [2]);
   fprintf(fw,"EYES,%d,%lf\n",eyeP,        eyeP/        parmEye    [2]);
   fprintf(fw,"LFIN,%d,%lf\n",leftFingerP, leftFingerP/ parmLFinger[2]);
