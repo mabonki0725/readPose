@@ -1,5 +1,6 @@
 #Local       prob  degree numOfFrame
 SOLDER,      0.5,5   ,10
+NOSE,        0.5,5   ,10
 MOUSE,       0.5,5   ,10
 #            prob  rate   numOfFrame              
 EYE,         0.5,0.2 ,10
